@@ -1,13 +1,11 @@
-# Bean Journal Admin - Free React Tailwind Admin Dashboard Template
+# Bean Journal Admin - React Tailwind Admin Dashboard
 
-Bean Journal Admin is a free and open-source admin dashboard template built on **React and Tailwind CSS**, providing developers
-with everything they need to create a comprehensive, data-driven back-end,
+Bean Journal Admin is an admin dashboard built on **React and Tailwind CSS**, providing
+everything needed to create a comprehensive, data-driven back-end,
 dashboard, or admin panel solution for a bean journaling application.
 
 With Bean Journal Admin, you get access to all the necessary dashboard UI components, elements, and pages required to build a
 feature-rich and complete dashboard or admin panel for managing bean journal entries. Whether you're building a dashboard for personal use or for a community of bean enthusiasts, Bean Journal Admin is the perfect solution to help you get up and running quickly.
-
-![Bean Journal Admin React.js Dashboard Preview](./banner.png)
 
 ## Overview
 
@@ -60,8 +58,8 @@ git clone https://github.com/EXE201-BeanJournal/bean-journal-admin.git
 
 ## Components
 
-Bean Journal Admin is a pre-designed starting point for building a web-based dashboard using React.js and Tailwind CSS for bean journaling. The
-template includes:
+Bean Journal Admin is a web-based dashboard using React.js and Tailwind CSS for bean journaling. The
+dashboard includes:
 
 - Sophisticated and accessible sidebar
 - Data visualization components
@@ -75,9 +73,9 @@ All components are built with React and styled using Tailwind CSS for easy custo
 
 ## License
 
-Bean Journal Admin React.js Free Version is released under the MIT License.
+Bean Journal Admin is released under the MIT License.
 
 ## Support
 
 If you find this project helpful, please consider giving it a star on GitHub. Your support helps us continue developing
-and maintaining this template.
+and maintaining this project.
