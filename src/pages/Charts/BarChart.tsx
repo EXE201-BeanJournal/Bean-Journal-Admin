@@ -13,7 +13,7 @@ export default function BarChart() {
       <PageBreadcrumb pageTitle="Bar Chart" />
       <div className="space-y-6">
         <ComponentCard title="Bar Chart 1">
-          <BarChartOne />
+          <BarChartOne series={undefined} />
         </ComponentCard>
       </div>
     </div>
