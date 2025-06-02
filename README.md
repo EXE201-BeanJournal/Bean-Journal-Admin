@@ -1,3 +1,4 @@
+[![Better Stack Badge](https://uptime.betterstack.com/status-badges/v1/monitor/1yl5t.svg)](https://uptime.betterstack.com/?utm_source=status_badge)
 # Bean Journal Admin - React Tailwind Admin Dashboard
 
 Bean Journal Admin is an admin dashboard built on **React and Tailwind CSS**, providing
