@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",                     // Specifies ECMAScript target version
+    "module": "ESNext",                    // Specifies module code generation (ESNext for ESM compatibility)
+    "moduleResolution": "NodeNext",          // Specifies module resolution strategy (NodeNext for ESM, Node is also an option)
+    "lib": ["ES2023"],                     // Specifies library files to be included in the compilation
+    "strict": true,                        // Enables all strict type-checking options
+    "esModuleInterop": true,               // Enables emit interoperability between ES modules and CommonJS modules
+    "allowSyntheticDefaultImports": true,   // Allows default imports from modules with no default export
+    "skipLibCheck": true,                  // Skips type checking of declaration files
+    "forceConsistentCasingInFileNames": true,// Disallow inconsistently-cased references to the same file
+    "resolveJsonModule": true,             // Include modules imported with .json extension
+    "outDir": "dist/server",               // Redirect output structure to the directory (optional, for builds)
+    "baseUrl": ".",                        // Base directory to resolve non-relative module names
+    "paths": {                             // Specify paths for module resolution
+      "@/*": ["src/*"]
+    },
+    // "noEmit": false, // This is the default, ensuring ts-node can get the JS output
+  },
+  "include": [
+    "server.ts",                           // Include your main server file
+    "src/api/**/*.ts"                      // Include your API handlers
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/**/*.test.ts"                     // Exclude test files
+  ]
+} 
