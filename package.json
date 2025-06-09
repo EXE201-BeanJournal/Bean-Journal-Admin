@@ -28,6 +28,7 @@
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "flatpickr": "^4.6.13",
+    "framer-motion": "^12.16.0",
     "next": "^15.3.3",
     "react": "^19.0.0",
     "react-apexcharts": "^1.7.0",

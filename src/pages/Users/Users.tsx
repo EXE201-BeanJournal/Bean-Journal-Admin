@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import ComponentCard from "../../components/common/ComponentCard";
 import PageMeta from "../../components/common/PageMeta";
@@ -11,6 +12,7 @@ import {
   TableRow,
 } from "../../components/ui/table";
 import Badge from "../../components/ui/badge/Badge";
+import TableSkeleton from '../../components/common/TableSkeleton';
 
 // Nested Interfaces for RawClerkUser (updated to camelCase)
 interface VerificationErrorInterface { // Assuming this structure if present, or adjust as needed
@@ -184,10 +186,6 @@ export default function UsersPage() {
     fetchUsers();
   }, []);
 
-  if (loading) {
-    return <div className="p-4">Loading users...</div>;
-  }
-
   if (error) {
     return <div className="p-4 text-red-500">Error: {error}</div>;
   }
@@ -244,63 +242,73 @@ export default function UsersPage() {
                     </TableCell>
                   </TableRow>
                 </TableHeader>
-                <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-                  {users.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell className="px-5 py-4 sm:px-6 text-start">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 overflow-hidden rounded-full">
-                            <img
-                              width={40}
-                              height={40}
-                              src={user.avatar} // This will now use user.imageUrl from RawClerkUser
-                              alt={`${user.name}'s avatar`}
-                            />
-                          </div>
-                          <div>
-                            <span className="block font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                              {user.name}
-                            </span>
-                            {user.username && (
-                              <span className="text-xs text-gray-500 dark:text-gray-400">
-                                @{user.username}
+                {loading ? (
+                  <TableSkeleton rows={5} />
+                ) : (
+                  <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+                    {users.map((user, index) => (
+                      <motion.tr
+                        key={user.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: index * 0.05 }}
+                        className="hover:bg-gray-50 dark:hover:bg-white/[0.02]"
+                      >
+                        <TableCell className="px-5 py-4 text-start sm:px-6">
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 overflow-hidden rounded-full">
+                              <img
+                                width={40}
+                                height={40}
+                                src={user.avatar} // This will now use user.imageUrl from RawClerkUser
+                                alt={`${user.name}'s avatar`}
+                              />
+                            </div>
+                            <div>
+                              <span className="block font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                                {user.name}
                               </span>
-                            )}
+                              {user.username && (
+                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                  @{user.username}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {user.email} {/* This will now use the primaryEmail logic */}
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {user.role}
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        {user.lastLogin}
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        <Badge
-                          size="sm"
-                          color={
-                            user.status === "Active"
-                              ? "success"
-                              : user.status === "Inactive"
-                              ? "error"
-                              : "warning"
-                          }
-                        >
-                          {user.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                        <Link to={`/users/edit/${user.id}`} className="text-blue-500 hover:underline mr-2">
-                          Edit
-                        </Link>
-                        <button onClick={() => console.log(`Delete user ${user.id}`)} className="text-red-500 hover:underline">Delete</button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-start text-theme-sm text-gray-500 dark:text-gray-400">
+                          {user.email} {/* This will now use the primaryEmail logic */}
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-start text-theme-sm text-gray-500 dark:text-gray-400">
+                          {user.role}
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-start text-theme-sm text-gray-500 dark:text-gray-400">
+                          {user.lastLogin}
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-start text-theme-sm text-gray-500 dark:text-gray-400">
+                          <Badge
+                            size="sm"
+                            color={
+                              user.status === "Active"
+                                ? "success"
+                                : user.status === "Inactive"
+                                ? "error"
+                                : "warning"
+                            }
+                          >
+                            {user.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-start text-theme-sm text-gray-500 dark:text-gray-400">
+                          <Link to={`/users/edit/${user.id}`} className="mr-2 text-blue-500 hover:underline">
+                            Edit
+                          </Link>
+                          <button onClick={() => console.log(`Delete user ${user.id}`)} className="text-red-500 hover:underline">Delete</button>
+                        </TableCell>
+                      </motion.tr>
+                    ))}
+                  </TableBody>
+                )}
               </Table>
             </div>
           </div>
