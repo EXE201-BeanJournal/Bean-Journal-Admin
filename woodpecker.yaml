@@ -3,8 +3,8 @@ steps:
     image: bash
     environment:
       # Make Woodpecker secrets available as environment variables in this step
-      ENVI:
-        from_secret: ENVIRONMENT
+     # ENVI:
+      #  from_secret: ENVIRONMENT
     commands:
       - curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
       - export NVM_DIR="$HOME/.nvm" # Or wherever nvm is installed
@@ -15,7 +15,7 @@ steps:
       - node -v
       - npm -v
       - corepack enable pnpm
-      - echo "$ENVI" | sudo tee .env > /dev/null
+     # - echo "$ENVI" | sudo tee .env > /dev/null
       - pnpm install --no-frozen-lockfile
       - pnpm add @mantine/core
       - pnpm add uuid
