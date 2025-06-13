@@ -16,10 +16,11 @@ const app = express();
 const PORT = process.env.PORT || 3001; //  Port for the backend server
 
 // CORS Configuration
-const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3002'; // Default to Vite dev server
+const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3002';
+const allowedOrigins = ['http://localhost:3002', frontendUrl];
 
 const corsOptions = {
-  origin: frontendUrl,
+  origin: allowedOrigins,
   optionsSuccessStatus: 200 // For legacy browser support
 };
 
