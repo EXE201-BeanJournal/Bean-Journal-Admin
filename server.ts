@@ -31,8 +31,7 @@ app.patch('/api/users/:userId', typedUpdateUserByIdHandler);  // PATCH update a 
 app.delete('/api/users/:userId', typedDeleteUserByIdHandler); // DELETE a user by ID
 app.get('/api/users/:userId/sessions', typedGetUserSessionsHandler); // Add route for user sessions
 
-const HOST = process.env.HOST || '192.168.2.245';
-app.listen(PORT, HOST, () => {
-  console.log(`Backend server is running on http://${HOST}:${PORT}`);
+app.listen(PORT, () => {
+  console.log(`Backend server is running on http://localhost:${PORT}`);
   console.log('Ensure your CLERK_SECRET_KEY is set in your .env file.');
 }); 
