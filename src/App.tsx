@@ -21,6 +21,7 @@ import Home from "./pages/Dashboard/Home";
 import Users from "./pages/Users/Users";
 import EditUserPage from "./pages/Users/EditUserPage";
 import JournalPage from './pages/Journal';
+import Unauthorized from './pages/OtherPage/Unauthorized';
 import { useAuthProtection } from "./hooks/auth";
 
 function AppRoutes() {
@@ -33,6 +34,7 @@ function AppRoutes() {
         {/* Auth Layout - Publicly Accessible */}
         <Route path="/signin" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/unauthorized" element={<Unauthorized />} />
 
         {/* Protected Dashboard Layout */}
         <Route

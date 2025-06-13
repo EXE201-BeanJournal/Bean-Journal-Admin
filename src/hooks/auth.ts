@@ -1,12 +1,12 @@
-import { useAuth, useClerk } from "@clerk/clerk-react";
+import { useAuth, useClerk, useUser } from "@clerk/clerk-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 
 // Public routes that don't require authentication
-const publicRoutes = [
-  "/signin",
-  "/signup",
-];
+const publicRoutes = ["/signin", "/signup", "/unauthorized"];
+
+// Routes accessible to any authenticated user, regardless of role
+const commonAuthenticatedRoutes = ["/profile"];
 
 // Get environment variables with fallbacks
 const getEnvVar = (key: string, fallback: string): string => {
@@ -20,6 +20,7 @@ const getEnvVar = (key: string, fallback: string): string => {
  */
 export function useAuthProtection() {
   const { isLoaded, isSignedIn, userId } = useAuth();
+  const { user } = useUser();
   const clerk = useClerk();
   const navigate = useNavigate();
   const location = useLocation();
@@ -35,25 +36,38 @@ export function useAuthProtection() {
       currentPath === route || currentPath.startsWith(`${route}/`)
     );
     
-    // 2. Protect non-public routes (middleware-like functionality)
+    // 2. Protect non-public routes
     if (!isPublicRoute && !isSignedIn) {
-      // If not authenticated and trying to access a protected route, 
-      // redirect to login with the intended destination
+      // If not authenticated and trying to access a protected route, redirect to login
       navigate(
         `${getEnvVar("SIGN_IN_URL", "/signin")}?redirect=${currentPath}`
       );
       return;
     }
     
-    // 3. Handle authenticated users on auth pages
+    // 3. Handle authenticated users
     if (isSignedIn) {
-      // If user is already signed in and on an auth page, redirect to destination
-      if (currentPath === "/signin" || currentPath === "/sign-up") {
+      // If user is on an auth page, redirect away
+      if (currentPath === "/signin" || currentPath === "/signup") {
         navigate(getEnvVar("AFTER_SIGN_IN_URL", "/journal"));
         return;
       }
+      
+      // 4. Role-based authorization for admin dashboard
+      const isCommonRoute = commonAuthenticatedRoutes.some(route =>
+        currentPath === route || currentPath.startsWith(`${route}/`)
+      );
+
+      // We need to wait for the user object to be loaded
+      if (user) {
+        const roles = (user.publicMetadata?.roles || []) as string[];
+        if (!roles.includes("admin") && !isPublicRoute && !isCommonRoute) {
+          navigate("/unauthorized");
+          return;
+        }
+      }
     }
-  }, [isLoaded, isSignedIn, currentPath, navigate, userId]);
+  }, [isLoaded, isSignedIn, user, currentPath, navigate, userId]);
   
   // Expose the auth state for components to use
   return {
