@@ -18,8 +18,8 @@ steps:
       - echo "$ENVI" | sudo tee .env > /dev/null
       - pnpm install --no-frozen-lockfile
       - pnpm add ts-node typescript @types/node
-      - pnpm add specifier-resolution-node
       - pnpm add make-error
+      - pnpm add yn
       - pnpm build
       - ls
   - name: Deploy FE
