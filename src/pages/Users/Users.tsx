@@ -134,9 +134,10 @@ export default function UsersPage() {
       setLoading(true);
       setError(null); 
       let rawResponseText = ''; 
+      const baseUrl = import.meta.env.PROD ? import.meta.env.VITE_API_URL : '';
 
       try {
-        const response = await fetch('/api/users');
+        const response = await fetch(`${baseUrl}/api/users`);
         rawResponseText = await response.text(); 
 
         if (!response.ok) {

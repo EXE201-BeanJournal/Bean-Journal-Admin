@@ -15,7 +15,15 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001; //  Port for the backend server
 
-app.use(cors());
+// CORS Configuration
+const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3002'; // Default to Vite dev server
+
+const corsOptions = {
+  origin: frontendUrl,
+  optionsSuccessStatus: 200 // For legacy browser support
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Type assertion for all handlers to ensure Express compatibility

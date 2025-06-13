@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "start": "node dist/server/server.js",
-    "start:server": "cross-env TS_NODE_PROJECT=tsconfig.server.json node --loader ts-node/esm --experimental-specifier-resolution=node server.ts"
+    "start:server": "npx tsx watch server.ts"
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.31.9",
