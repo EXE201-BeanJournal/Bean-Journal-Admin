@@ -19,6 +19,7 @@ steps:
       - pnpm install --no-frozen-lockfile
       - pnpm add ts-node typescript @types/node
       - pnpm add make-error
+      - pnpm add specifier-resolution-node
       - pnpm add yn
       - pnpm build
       - ls
