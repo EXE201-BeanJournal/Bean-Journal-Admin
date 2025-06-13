@@ -53,7 +53,7 @@ steps:
         sudo ssh -i $WOODPECKER_WORKSPACE/.ssh/id_rsa_deploy -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST "
           cd $REMOTE_TARGET_PATH/Bean-Journal-Admin &&
           pm2 delete BJ_Admin || true &&
-          pm2 start server.ts --name "BJ_AdminServer" --node-args="--loader ts-node/esm --experimental-specifier-resolution=node" --env TS_NODE_PROJECT=tsconfig.server.json &&
+          pm2 start server.ts --name "BJ_AdminServer" --node-args="--loader ts-node/esm" --env TS_NODE_PROJECT=tsconfig.server.json &&
           pm2 start serve --name BJ_Admin -- -s ./dist/ -l 3002 &&
           pm2 save
         "
