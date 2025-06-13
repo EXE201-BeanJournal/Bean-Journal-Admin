@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom";
 import { useClerk } from "@clerk/clerk-react";
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 import PageMeta from "../../components/common/PageMeta";
 import GridShape from "../../components/common/GridShape";
 import { LockIcon } from "../../icons"; // Assuming LockIcon is exported from index
 
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -15,7 +15,7 @@ const containerVariants = {
   },
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { y: 20, opacity: 0 },
   visible: {
     y: 0,
