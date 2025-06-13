@@ -1,16 +1,18 @@
+import { SignIn } from "@clerk/clerk-react";
 import PageMeta from "../../components/common/PageMeta";
 import AuthLayout from "./AuthPageLayout";
-import SignInForm from "../../components/auth/SignInForm";
 
-export default function SignIn() {
+export default function SignInPage() {
   return (
     <>
       <PageMeta
-        title="React.js SignIn Dashboard | TailAdmin - Next.js Admin Dashboard Template"
-        description="This is React.js SignIn Tables Dashboard page for TailAdmin - React.js Tailwind CSS Admin Dashboard Template"
+        title="Sign In | Bean Journal"
+        description="Sign in to your Bean Journal account."
       />
       <AuthLayout>
-        <SignInForm />
+        <div className="flex items-center justify-center w-full">
+          <SignIn />
+        </div>
       </AuthLayout>
     </>
   );
