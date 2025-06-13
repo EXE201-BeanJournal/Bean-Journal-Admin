@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vite build && tsc --project tsconfig.server.json",
     "lint": "eslint .",
     "preview": "vite preview",
+    "start": "node dist/server/server.js",
     "start:server": "cross-env TS_NODE_PROJECT=tsconfig.server.json node --loader ts-node/esm --experimental-specifier-resolution=node server.ts"
   },
   "dependencies": {

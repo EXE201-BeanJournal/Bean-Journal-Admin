@@ -6,7 +6,7 @@ import getAllUsersHandler, {
   updateUserByIdHandler,
   deleteUserByIdHandler,
   getUserSessionsHandler
-} from './src/api/users';
+} from './src/api/users/index.js';
 
 // Load environment variables from .env file
 dotenv.config();

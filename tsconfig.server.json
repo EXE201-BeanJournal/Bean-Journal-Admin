@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",                     // Specifies ECMAScript target version
-    "module": "ESNext",                    // Specifies module code generation (ESNext for ESM compatibility)
+    "module": "NodeNext",                    // Specifies module code generation (ESNext for ESM compatibility)
     "moduleResolution": "NodeNext",          // Specifies module resolution strategy (NodeNext for ESM, Node is also an option)
     "lib": ["ES2023"],                     // Specifies library files to be included in the compilation
     "strict": true,                        // Enables all strict type-checking options
