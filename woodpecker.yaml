@@ -17,6 +17,7 @@ steps:
       - corepack enable pnpm
       - echo "$ENVI" | sudo tee .env > /dev/null
       - pnpm install --no-frozen-lockfile
+      - pnpm add ts-node typescript @types/node
       - pnpm add specifier-resolution-node
       - pnpm build
       - ls
