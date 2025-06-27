@@ -22,6 +22,7 @@ export interface SupportSession {
   agentId?: string;
   agentName?: string;
   status: 'waiting' | 'connected' | 'ended';
+  aiConversationHistory?: string;
   messages: SupportMessage[];
   createdAt: Date;
 }

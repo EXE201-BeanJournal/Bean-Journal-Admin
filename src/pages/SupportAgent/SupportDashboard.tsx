@@ -674,6 +674,53 @@ const SupportDashboard: React.FC = () => {
                 </div>
               </motion.div>
 
+              {/* AI Conversation History */}
+              {selectedSession.aiConversationHistory && (
+                <motion.div 
+                  className="bg-blue-50 dark:bg-blue-900/20 border-b dark:border-gray-700 px-6 py-3"
+                  initial={{ y: -10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.45 }}
+                >
+                  <div className="flex items-center space-x-2 mb-2">
+                    <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                      <span className="text-xs text-white font-bold">AI</span>
+                    </div>
+                    <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                      Previous AI Conversation
+                    </h4>
+                  </div>
+                  <div className="max-h-32 overflow-y-auto bg-white dark:bg-gray-800 rounded-lg p-3 text-xs">
+                    {(() => {
+                      try {
+                        const history = JSON.parse(selectedSession.aiConversationHistory);
+                        return history.map((msg: { type: string; content: string }, index: number) => (
+                          <div key={index} className="mb-2 last:mb-0">
+                            <span className={`font-medium ${
+                              msg.type === 'user' 
+                                ? 'text-green-600 dark:text-green-400' 
+                                : 'text-blue-600 dark:text-blue-400'
+                            }`}>
+                              {msg.type === 'user' ? 'User' : 'AI Assistant'}:
+                            </span>
+                            <span className="ml-2 text-gray-700 dark:text-gray-300">
+                              {msg.content}
+                            </span>
+                          </div>
+                        ));
+                      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                      } catch (_) {
+                        return (
+                          <div className="text-gray-500 dark:text-gray-400 italic">
+                            Unable to parse conversation history
+                          </div>
+                        );
+                      }
+                    })()}
+                  </div>
+                </motion.div>
+              )}
+
               {/* Messages */}
               <motion.div 
                 className="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800"

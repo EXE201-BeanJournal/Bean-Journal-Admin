@@ -95,6 +95,7 @@ export const useSupportAgentDashboard = () => {
             agentId: session.agent_id,
             agentName: session.agent_name,
             status: session.status,
+            aiConversationHistory: session.ai_conversation_history || undefined,
             createdAt: new Date(session.created_at || new Date().toISOString()),
             messages: processedMessages
           };

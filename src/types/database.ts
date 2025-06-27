@@ -45,6 +45,7 @@ export interface Database {
           agent_id: string | null;
           agent_name: string | null;
           status: 'waiting' | 'connected' | 'ended';
+          ai_conversation_history: string | null;
           created_at: string | null;
           updated_at: string | null;
           ended_at: string | null;
@@ -57,6 +58,7 @@ export interface Database {
           agent_id?: string | null;
           agent_name?: string | null;
           status: 'waiting' | 'connected' | 'ended';
+          ai_conversation_history?: string | null;
           created_at?: string | null;
           updated_at?: string | null;
           ended_at?: string | null;
@@ -69,6 +71,7 @@ export interface Database {
           agent_id?: string | null;
           agent_name?: string | null;
           status?: 'waiting' | 'connected' | 'ended';
+          ai_conversation_history?: string | null;
           created_at?: string | null;
           updated_at?: string | null;
           ended_at?: string | null;
