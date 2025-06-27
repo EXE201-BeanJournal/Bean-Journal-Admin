@@ -1,6 +1,5 @@
-/// <reference types="vite/client" />
-
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { Database } from '../types/database';
 
 // Use Vite specific env vars for client-side accessibility
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -16,22 +15,12 @@ if (!supabaseAnonKey || supabaseAnonKey === "YOUR_SUPABASE_ANON_KEY") {
 }
 
 /**
- * Creates a Supabase client instance for browser environments, configured to use
- * Clerk's session token for authentication.
- *
- * @param getToken A function that returns a Promise resolving to the Clerk session token string,
- *                 or null if no token is available. Typically, this would be:
- *                 `() => session?.getToken({ template: 'supabase' })`
- *                 where `session` is from Clerk's `useSession()` hook.
- * @returns A SupabaseClient instance.
- * @throws Error if Supabase URL or Anon Key is not configured.
+ * Creates a Supabase client for the public schema (journal entries, etc.)
  */
-export function createClerkSupabaseClient(
+export function createPublicSchemaClient(
   getToken: () => Promise<string | null>
 ): SupabaseClient {
   if (!supabaseUrl || !supabaseAnonKey || supabaseUrl === "YOUR_SUPABASE_URL" || supabaseAnonKey === "YOUR_SUPABASE_ANON_KEY") {
-    // Throw an error if essential configuration is missing or still default.
-    // This helps catch configuration issues early.
     throw new Error('Supabase URL or Anon Key is not properly configured. Please check your environment variables and ensure they are not using default placeholder values.');
   }
   
@@ -47,7 +36,6 @@ export function createClerkSupabaseClient(
         if (token) {
           headers.set('Authorization', `Bearer ${token}`);
         }
-
         return fetch(url, {
           ...options,
           headers,
@@ -60,4 +48,49 @@ export function createClerkSupabaseClient(
       detectSessionInUrl: false,
     }
   });
+}
+
+/**
+ * Creates a Supabase client for the bean_ai_realtime schema (support functionality)
+ */
+export function createSupportSchemaClient(
+  getToken: () => Promise<string | null>
+): SupabaseClient<Database, 'bean_ai_realtime', Database['bean_ai_realtime']> {
+  if (!supabaseUrl || !supabaseAnonKey || supabaseUrl === "YOUR_SUPABASE_URL" || supabaseAnonKey === "YOUR_SUPABASE_ANON_KEY") {
+    throw new Error('Supabase URL or Anon Key is not properly configured. Please check your environment variables and ensure they are not using default placeholder values.');
+  }
+  
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    db: {
+      schema: 'bean_ai_realtime'  // Use the bean_ai_realtime schema for support features
+    },
+    global: {
+      fetch: async (url, options = {}) => {
+        const token = await getToken();
+
+        const headers = new Headers(options.headers);
+        if (token) {
+          headers.set('Authorization', `Bearer ${token}`);
+        }
+        return fetch(url, {
+          ...options,
+          headers,
+        });
+      },
+    },
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    }
+  });
+}
+
+/**
+ * Legacy function for backward compatibility - now uses public schema
+ */
+export function createClerkSupabaseClient(
+  getToken: () => Promise<string | null>
+): SupabaseClient {
+  return createPublicSchemaClient(getToken);
 }

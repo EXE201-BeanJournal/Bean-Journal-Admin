@@ -9,6 +9,7 @@ import {
   PageIcon,
   UserCircleIcon,
 } from "../icons";
+import { Headphones } from 'lucide-react';
 import { useSidebar } from "../context/SidebarContext";
 // import SidebarWidget from "./SidebarWidget";
 
@@ -29,6 +30,11 @@ const navItems: NavItem[] = [
     icon: <UserCircleIcon />,
     name: "Users",
     path: "/users",
+  },
+  {
+    icon: <Headphones className="w-5 h-5" />,
+    name: "Support",
+    path: "/support",
   },
   // {
   //   icon: <UserCircleIcon />,

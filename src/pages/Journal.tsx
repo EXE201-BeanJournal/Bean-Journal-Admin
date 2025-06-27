@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSession } from '@clerk/clerk-react';
-import { createClerkSupabaseClient } from '../utils/clerkSupabase';
+import { usePublicSupabase } from '../context/SupabaseContext';
 import PageMeta from '../components/common/PageMeta';
 import ComponentCard from '../components/common/ComponentCard';
 import CardSkeleton from '../components/common/CardSkeleton';
@@ -16,6 +16,7 @@ interface UserSummary {
 
 const JournalPage: React.FC = () => {
   const { session, isLoaded } = useSession();
+  const publicSupabase = usePublicSupabase();
   const [userSummaries, setUserSummaries] = useState<UserSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,16 +29,25 @@ const JournalPage: React.FC = () => {
 
     if (session) {
       const fetchSummaries = async () => {
-        setLoading(true);
-        const supabase = createClerkSupabaseClient(() => session.getToken({ template: 'supabase' }));
         try {
+          setLoading(true);
+          setError('');
+
+          if (!session) {
+            throw new Error('No session available');
+          }
+
+          if (!publicSupabase) {
+            throw new Error('Failed to create Supabase client');
+          }
+
           // 1. Fetch all data concurrently
           const [journalsRes, projectsRes, tagsRes, profilesRes] = await Promise.all([
-            supabase.from('journal_entries').select('user_id, entry_timestamp'),
-            supabase.from('projects').select('user_id'),
-            supabase.from('tags').select('user_id'),
-            supabase.from('profiles').select('id, username'),
-          ]);
+              publicSupabase.from('journal_entries').select('user_id, entry_timestamp'),
+              publicSupabase.from('projects').select('user_id'),
+              publicSupabase.from('tags').select('user_id'),
+              publicSupabase.from('profiles').select('id, username'),
+            ]);
 
           // 2. Check for errors
           if (journalsRes.error) throw journalsRes.error;
@@ -165,4 +175,4 @@ const JournalPage: React.FC = () => {
   );
 };
 
-export default JournalPage; 
+export default JournalPage;

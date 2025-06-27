@@ -22,6 +22,7 @@ import Users from "./pages/Users/Users";
 import EditUserPage from "./pages/Users/EditUserPage";
 import JournalPage from './pages/Journal';
 import Unauthorized from './pages/OtherPage/Unauthorized';
+import SupportDashboard from './pages/SupportAgent/SupportDashboard';
 import { useAuthProtection } from "./hooks/auth";
 
 function AppRoutes() {
@@ -46,6 +47,9 @@ function AppRoutes() {
           {/* Users Page */}
           <Route path="/users" element={<Users />} />
           <Route path="/users/edit/:userId" element={<EditUserPage />} />
+          
+          {/* Support Agent Dashboard */}
+          <Route path="/support" element={<SupportDashboard />} />
 
           {/* Others Page */}
           <Route path="/journal" element={<JournalPage />} />
