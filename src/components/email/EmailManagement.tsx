@@ -4,26 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Badge } from '../ui/Badge';
-
-interface Email {
-  id: string;
-  from_address: string;
-  to_address: string;
-  subject: string;
-  body_text: string;
-  body_html?: string;
-  received_at: string;
-  is_read: boolean;
-  is_replied: boolean;
-  attachments?: Array<{
-    id: string;
-    filename: string;
-    content_type: string;
-    size: number;
-  }>;
-  thread_id?: string;
-  message_id: string;
-}
+import { SupabaseEmailService, Email } from '../../services/supabaseEmailService';
 
 interface EmailManagementProps {
   className?: string;
@@ -42,6 +23,9 @@ const EmailManagement: React.FC<EmailManagementProps> = ({ className = '' }) => 
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
   const emailsPerPage = 20;
 
+  // Initialize Supabase Email Service
+  const [emailService] = useState(() => new SupabaseEmailService());
+
   // Email configuration
   const EMAIL_CONFIG = {
     supportEmail: 'support@beanjournal.site'
@@ -54,45 +38,25 @@ const EmailManagement: React.FC<EmailManagementProps> = ({ className = '' }) => 
   const fetchEmails = async (page = 0, search = '', unreadOnly = false) => {
     setIsLoading(true);
     try {
-      const baseUrl = import.meta.env.PROD ? import.meta.env.VITE_API_URL : '';
-      const params = new URLSearchParams({
-        limit: emailsPerPage.toString(),
-        offset: (page * emailsPerPage).toString(),
+      const result = await emailService.fetchEmails({
+        limit: emailsPerPage,
+        offset: page * emailsPerPage,
+        unreadOnly: unreadOnly,
+        searchQuery: search,
         sortBy: 'received_at',
         sortOrder: 'desc'
       });
       
-      if (search) params.append('search', search);
-      if (unreadOnly) params.append('unreadOnly', 'true');
+      const emailsWithDates = result.emails.map((email: Email) => ({
+        ...email,
+        timestamp: new Date(email.received_at)
+      }));
       
-      const response = await fetch(`${baseUrl}/api/email/fetch?${params}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        const text = await response.text();
-        throw new Error(`Expected JSON response but got: ${contentType}. Response: ${text.substring(0, 200)}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        const emailsWithDates = data.emails.map((email: Email) => ({
-          ...email,
-          timestamp: new Date(email.received_at)
-        }));
-        setEmails(emailsWithDates);
-        setTotalEmails(data.total || 0);
-      } else {
-        console.error('Failed to fetch emails:', data.message);
-        alert('Failed to fetch emails: ' + data.message);
-      }
+      setEmails(emailsWithDates);
+      setTotalEmails(result.total);
     } catch (error) {
       console.error('Failed to fetch emails:', error);
-      alert('Failed to fetch emails. Please check your connection.');
+      alert('Failed to fetch emails: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setIsLoading(false);
     }
@@ -103,58 +67,30 @@ const EmailManagement: React.FC<EmailManagementProps> = ({ className = '' }) => 
 
     setIsSending(true);
     try {
-      const baseUrl = import.meta.env.PROD ? import.meta.env.VITE_API_URL : '';
-      const response = await fetch(`${baseUrl}/api/email/send`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          to_address: selectedEmail.from_address,
-          subject: `Re: ${selectedEmail.subject}`,
-          body_text: content,
-          body_html: `<p>${content.replace(/\n/g, '<br>')}</p>`,
-          reply_to_email_id: emailId
-        })
+      await emailService.sendEmail({
+        to_address: selectedEmail.from_address,
+        subject: `Re: ${selectedEmail.subject}`,
+        body_text: content,
+        body_html: `<p>${content.replace(/\n/g, '<br>')}</p>`,
+        reply_to_email_id: emailId
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      // Update email as replied
+      setEmails(prev => prev.map(email => 
+        email.id === emailId 
+          ? { ...email, is_replied: true, is_read: true }
+          : email
+      ));
+
+      // Update selected email
+      if (selectedEmail) {
+        setSelectedEmail({ ...selectedEmail, is_replied: true, is_read: true });
       }
+
+      setReplyContent('');
+      setShowReplyForm(false);
       
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        const text = await response.text();
-        throw new Error(`Expected JSON response but got: ${contentType}. Response: ${text.substring(0, 200)}`);
-      }
-
-      const data = await response.json();
-      
-      if (data.success) {
-        // Mark as replied
-        await fetch(`${baseUrl}/api/email/${emailId}/mark-replied`, {
-          method: 'PUT'
-        });
-
-        // Update email as replied
-        setEmails(prev => prev.map(email => 
-          email.id === emailId 
-            ? { ...email, is_replied: true, is_read: true }
-            : email
-        ));
-
-        // Update selected email
-        if (selectedEmail) {
-          setSelectedEmail({ ...selectedEmail, is_replied: true, is_read: true });
-        }
-
-        setReplyContent('');
-        setShowReplyForm(false);
-        
-        alert('Reply sent successfully!');
-      } else {
-        throw new Error(data.message || 'Failed to send reply');
-      }
+      alert('Reply sent successfully!');
     } catch (error) {
       console.error('Failed to send reply:', error);
       alert('Failed to send reply: ' + (error instanceof Error ? error.message : 'Unknown error'));
@@ -165,14 +101,15 @@ const EmailManagement: React.FC<EmailManagementProps> = ({ className = '' }) => 
 
   const markAsRead = async (emailId: string) => {
     try {
-      const baseUrl = import.meta.env.PROD ? import.meta.env.VITE_API_URL : '';
-      await fetch(`${baseUrl}/api/email/${emailId}/mark-read`, {
-        method: 'PUT'
-      });
+      await emailService.markAsRead(emailId);
       
       setEmails(prev => prev.map(email => 
         email.id === emailId ? { ...email, is_read: true } : email
       ));
+      
+      if (selectedEmail && selectedEmail.id === emailId) {
+        setSelectedEmail({ ...selectedEmail, is_read: true });
+      }
     } catch (error) {
       console.error('Failed to mark email as read:', error);
     }
@@ -180,34 +117,18 @@ const EmailManagement: React.FC<EmailManagementProps> = ({ className = '' }) => 
 
   const deleteEmail = async (emailId: string) => {
     if (!confirm('Are you sure you want to delete this email?')) return;
-
+    
     try {
-      const baseUrl = import.meta.env.PROD ? import.meta.env.VITE_API_URL : '';
-      const response = await fetch(`${baseUrl}/api/email/${emailId}`, {
-        method: 'DELETE'
-      });
+      await emailService.deleteEmail(emailId);
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      setEmails(prev => prev.filter(email => email.id !== emailId));
+      setTotalEmails(prev => prev - 1);
+      
+      if (selectedEmail && selectedEmail.id === emailId) {
+        setSelectedEmail(null);
       }
       
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        const text = await response.text();
-        throw new Error(`Expected JSON response but got: ${contentType}. Response: ${text.substring(0, 200)}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        setEmails(prev => prev.filter(email => email.id !== emailId));
-        if (selectedEmail?.id === emailId) {
-          setSelectedEmail(null);
-        }
-        alert('Email deleted successfully!');
-      } else {
-        throw new Error(data.message || 'Failed to delete email');
-      }
+      alert('Email deleted successfully!');
     } catch (error) {
       console.error('Failed to delete email:', error);
       alert('Failed to delete email: ' + (error instanceof Error ? error.message : 'Unknown error'));
@@ -217,8 +138,8 @@ const EmailManagement: React.FC<EmailManagementProps> = ({ className = '' }) => 
   // Search is now handled server-side, but we keep this for immediate filtering
   const filteredEmails = emails.filter(email => 
     email.from_address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    email.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    email.body_text.toLowerCase().includes(searchTerm.toLowerCase())
+    (email.subject?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+    email.body_text?.toLowerCase().includes(searchTerm.toLowerCase()) || false
   );
 
   // Handle search with debouncing
@@ -517,7 +438,7 @@ const EmailManagement: React.FC<EmailManagementProps> = ({ className = '' }) => 
                               {attachment.filename}
                             </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400">
-                              {attachment.content_type} • {Math.round(attachment.size / 1024)}KB
+                              {attachment.content_type} • {attachment.size_bytes ? Math.round(attachment.size_bytes / 1024) : 0}KB
                             </p>
                           </div>
                         </div>
