@@ -3,7 +3,7 @@ when:
     branch: main
   - event: push
     branch: main
-    
+  
 steps:
   - name: Building FE
     image: bash
