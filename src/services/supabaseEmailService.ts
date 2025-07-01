@@ -96,11 +96,11 @@ export class SupabaseEmailService {
     this.emailServiceUrl = process.env.EMAIL_SERVICE_URL || 'https://api.resend.com';
     this.emailServiceKey = process.env.EMAIL_SERVICE_KEY || '';
 
-    console.log('Supabase configuration:', { 
+    console.log('SupabaseEmailService initialized with:', {
       hasUrl: !!supabaseUrl, 
       hasKey: !!supabaseKey,
       hasEmailServiceKey: !!this.emailServiceKey,
-      isClient: typeof window !== 'undefined'
+      isServer: true
     });
 
     if (!supabaseUrl || !supabaseKey) {
