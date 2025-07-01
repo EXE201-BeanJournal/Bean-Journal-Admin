@@ -8,6 +8,7 @@ import getAllUsersHandler, {
   deleteUserByIdHandler,
   getUserSessionsHandler
 } from './src/api/users/index.js';
+import emailRouter from './src/api/email.js';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -41,6 +42,9 @@ app.patch('/api/users/:userId', typedUpdateUserByIdHandler);  // PATCH update a 
 app.delete('/api/users/:userId', typedDeleteUserByIdHandler); // DELETE a user by ID
 app.get('/api/users/:userId/sessions', typedGetUserSessionsHandler); // Add route for user sessions
 
+// Email API Routes
+app.use('/api/email', emailRouter);
+
 const getNetworkAddress = () => {
   for (const interfaceDetails of Object.values(os.networkInterfaces())) {
     if (!interfaceDetails) continue;
@@ -56,4 +60,4 @@ app.listen(PORT, () => {
   const host = getNetworkAddress();
   console.log(`Backend server is running on http://${host}:${PORT}`);
   console.log('Ensure your CLERK_SECRET_KEY is set in your .env file.');
-}); 
+});

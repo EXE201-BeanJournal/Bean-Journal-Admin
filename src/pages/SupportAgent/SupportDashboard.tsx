@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, MessageCircle, Send, Clock, Users, CheckCircle } from 'lucide-react';
+import { User, MessageCircle, Send, Clock, Users, CheckCircle, Mail, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -8,6 +8,7 @@ import { Badge } from '../../components/ui/Badge';
 import { useSupportAgentDashboard } from '../../hooks/use-support-agent-dashboard';
 import { SupportSession, SupportMessage } from '../../types/support';
 import { useUser } from '@clerk/clerk-react';
+import EmailManagement from '../../components/email/EmailManagement';
 
 // Skeleton Components
 const SessionCardSkeleton: React.FC = () => (
@@ -44,6 +45,7 @@ const SupportDashboard: React.FC = () => {
   const [selectedSession, setSelectedSession] = useState<SupportSession | null>(null);
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'chat' | 'email'>('chat');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useUser();
   
@@ -305,14 +307,60 @@ const SupportDashboard: React.FC = () => {
         </div>
       </motion.div>
 
+      {/* Tab Navigation */}
+      <motion.div 
+        initial={{ y: -10, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.6, delay: 0.2 }}
+        className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-b dark:border-gray-700 px-6"
+      >
+        <div className="flex space-x-1">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setActiveTab('chat')}
+            className={`flex items-center space-x-2 px-4 py-3 text-sm font-medium rounded-t-lg transition-all duration-200 ${
+              activeTab === 'chat'
+                ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-b-2 border-blue-500'
+                : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
+            }`}
+          >
+            <MessageSquare className="w-4 h-4" />
+            <span>Live Chat</span>
+            {(pendingRequests.length > 0 || activeSessions.length > 0) && (
+              <Badge variant="destructive" className="ml-2 px-2 py-0 text-xs">
+                {pendingRequests.length + activeSessions.length}
+              </Badge>
+            )}
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setActiveTab('email')}
+            className={`flex items-center space-x-2 px-4 py-3 text-sm font-medium rounded-t-lg transition-all duration-200 ${
+              activeTab === 'email'
+                ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-b-2 border-blue-500'
+                : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
+            }`}
+          >
+            <Mail className="w-4 h-4" />
+            <span>Email Support</span>
+          </motion.button>
+        </div>
+      </motion.div>
+
       <div className="flex-1 flex">
-        {/* Sidebar */}
-        <motion.div 
-          initial={{ x: -50, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ duration: 0.7, delay: 0.4 }}
-          className="w-80 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-r dark:border-gray-700 flex flex-col shadow-lg"
-        >
+        {activeTab === 'email' ? (
+          <EmailManagement className="flex-1" />
+        ) : (
+          <>
+            {/* Sidebar */}
+            <motion.div 
+              initial={{ x: -50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.7, delay: 0.4 }}
+              className="w-80 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-r dark:border-gray-700 flex flex-col shadow-lg"
+            >
           {/* Pending Requests */}
           <div className="p-4 border-b dark:border-gray-700">
             <motion.h2 
@@ -852,7 +900,9 @@ const SupportDashboard: React.FC = () => {
               </div>
             </motion.div>
           )}
-        </motion.div>
+            </motion.div>
+          </>
+        )}
       </div>
     </motion.div>
   );
