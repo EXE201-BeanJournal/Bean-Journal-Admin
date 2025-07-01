@@ -28,8 +28,8 @@ const healthCheckHandler: RequestHandler = async (_req, res) => {
       message: 'Email API is running',
       timestamp: new Date().toISOString(),
       environment: {
-        hasSupabaseUrl: !!(typeof window !== 'undefined' ? import.meta.env.VITE_SUPABASE_URL : process.env.VITE_SUPABASE_URL),
-        hasSupabaseKey: !!(typeof window !== 'undefined' ? import.meta.env.VITE_SUPABASE_ANON_KEY : process.env.VITE_SUPABASE_ANON_KEY),
+        hasSupabaseUrl: !!(process.env.VITE_SUPABASE_URL),
+        hasSupabaseKey: !!(process.env.VITE_SUPABASE_ANON_KEY),
         nodeEnv: process.env.NODE_ENV || 'development'
       }
     });
