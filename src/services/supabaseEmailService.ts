@@ -90,10 +90,18 @@ export class SupabaseEmailService {
   private emailServiceKey: string;
 
   constructor() {
-    const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
-    const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || '';
-    this.emailServiceUrl = process.env.EMAIL_SERVICE_URL || 'https://api.resend.com';
-    this.emailServiceKey = process.env.EMAIL_SERVICE_KEY || '';
+    // Use import.meta.env for client-side and process.env for server-side
+    const supabaseUrl = (typeof window !== 'undefined' ? import.meta.env.VITE_SUPABASE_URL : process.env.VITE_SUPABASE_URL) || '';
+    const supabaseKey = (typeof window !== 'undefined' ? import.meta.env.VITE_SUPABASE_ANON_KEY : process.env.VITE_SUPABASE_ANON_KEY) || '';
+    this.emailServiceUrl = (typeof window !== 'undefined' ? import.meta.env.VITE_EMAIL_SERVICE_URL : process.env.EMAIL_SERVICE_URL) || 'https://api.resend.com';
+    this.emailServiceKey = (typeof window !== 'undefined' ? import.meta.env.VITE_EMAIL_SERVICE_KEY : process.env.EMAIL_SERVICE_KEY) || '';
+
+    console.log('Supabase configuration:', { 
+      hasUrl: !!supabaseUrl, 
+      hasKey: !!supabaseKey,
+      hasEmailServiceKey: !!this.emailServiceKey,
+      isClient: typeof window !== 'undefined'
+    });
 
     if (!supabaseUrl || !supabaseKey) {
       throw new Error('Missing Supabase configuration. Please check VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.');
@@ -113,45 +121,55 @@ export class SupabaseEmailService {
     sortBy?: 'received_at' | 'subject' | 'from_address';
     sortOrder?: 'asc' | 'desc';
   } = {}): Promise<{ emails: Email[]; total: number }> {
-    const {
-      limit = 50,
-      offset = 0,
-      unreadOnly = false,
-      searchQuery = '',
-      sortBy = 'received_at',
-      sortOrder = 'desc'
-    } = options;
+    try {
+      const {
+        limit = 50,
+        offset = 0,
+        unreadOnly = false,
+        searchQuery = '',
+        sortBy = 'received_at',
+        sortOrder = 'desc'
+      } = options;
 
-    let query = this.supabase
-      .from('email_management.emails')
-      .select('*, attachments:email_management.email_attachments(*), headers:email_management.email_headers(*)', { count: 'exact' })
-      .eq('is_deleted', false);
+      console.log('Fetching emails with options:', options);
 
-    // Apply filters
-    if (unreadOnly) {
-      query = query.eq('is_read', false);
+      let query = this.supabase
+        .from('email_management.emails')
+        .select('*, attachments:email_management.email_attachments(*), headers:email_management.email_headers(*)', { count: 'exact' })
+        .eq('is_deleted', false);
+
+      // Apply filters
+      if (unreadOnly) {
+        query = query.eq('is_read', false);
+      }
+
+      if (searchQuery) {
+        query = query.or(`subject.ilike.%${searchQuery}%,from_address.ilike.%${searchQuery}%,body_text.ilike.%${searchQuery}%`);
+      }
+
+      // Apply sorting
+      query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+
+      // Apply pagination
+      query = query.range(offset, offset + limit - 1);
+
+      const { data, error, count } = await query;
+
+      if (error) {
+        console.error('Supabase query error:', error);
+        throw new Error(`Failed to fetch emails: ${error.message}`);
+      }
+
+      console.log('Successfully fetched emails:', { count: data?.length, total: count });
+
+      return {
+        emails: (data as unknown as Email[]) || [],
+        total: count || 0
+      };
+    } catch (error) {
+      console.error('Error in fetchEmails:', error);
+      throw error;
     }
-
-    if (searchQuery) {
-      query = query.or(`subject.ilike.%${searchQuery}%,from_address.ilike.%${searchQuery}%,body_text.ilike.%${searchQuery}%`);
-    }
-
-    // Apply sorting
-    query = query.order(sortBy, { ascending: sortOrder === 'asc' });
-
-    // Apply pagination
-    query = query.range(offset, offset + limit - 1);
-
-    const { data, error, count } = await query;
-
-    if (error) {
-      throw new Error(`Failed to fetch emails: ${error.message}`);
-    }
-
-    return {
-      emails: (data as unknown as Email[]) || [],
-      total: count || 0
-    };
   }
 
   /**
@@ -242,7 +260,7 @@ export class SupabaseEmailService {
           'Authorization': `Bearer ${this.emailServiceKey}`
         },
         body: JSON.stringify({
-          from: process.env.EMAIL_FROM_ADDRESS || 'support@beanjournal.site',
+          from: (typeof window !== 'undefined' ? import.meta.env.VITE_EMAIL_FROM_ADDRESS : process.env.EMAIL_FROM_ADDRESS) || 'support@beanjournal.site',
           to: [emailData.to_address],
           subject: subject,
           text: body_text,
@@ -261,7 +279,7 @@ export class SupabaseEmailService {
       // Log the sent email
       await this.logSentEmail({
         to_address: emailData.to_address,
-        from_address: process.env.EMAIL_FROM_ADDRESS || 'support@beanjournal.site',
+        from_address: (typeof window !== 'undefined' ? import.meta.env.VITE_EMAIL_FROM_ADDRESS : process.env.EMAIL_FROM_ADDRESS) || 'support@beanjournal.site',
         subject: subject,
         body_text: body_text,
         body_html: body_html,
@@ -281,7 +299,7 @@ export class SupabaseEmailService {
       // Log failed email
       await this.logSentEmail({
         to_address: emailData.to_address,
-        from_address: process.env.EMAIL_FROM_ADDRESS || 'support@beanjournal.site',
+        from_address: (typeof window !== 'undefined' ? import.meta.env.VITE_EMAIL_FROM_ADDRESS : process.env.EMAIL_FROM_ADDRESS) || 'support@beanjournal.site',
         subject: emailData.subject,
         body_text: emailData.body_text,
         body_html: emailData.body_html,

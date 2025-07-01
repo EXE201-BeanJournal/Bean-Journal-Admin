@@ -20,9 +20,36 @@ const testConnectionHandler: RequestHandler = async (_req, res) => {
 
 router.get('/test-connection', testConnectionHandler);
 
-// GET /api/email/fetch
-const fetchEmailsHandler: RequestHandler = async (req, res) => {
+// GET /api/email/health - Simple health check
+const healthCheckHandler: RequestHandler = async (_req, res) => {
   try {
+    res.json({
+      success: true,
+      message: 'Email API is running',
+      timestamp: new Date().toISOString(),
+      environment: {
+        hasSupabaseUrl: !!(typeof window !== 'undefined' ? import.meta.env.VITE_SUPABASE_URL : process.env.VITE_SUPABASE_URL),
+        hasSupabaseKey: !!(typeof window !== 'undefined' ? import.meta.env.VITE_SUPABASE_ANON_KEY : process.env.VITE_SUPABASE_ANON_KEY),
+        nodeEnv: process.env.NODE_ENV || 'development'
+      }
+    });
+  } catch (error) {
+    console.error('Health check failed:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Health check failed',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+};
+
+router.get('/health', healthCheckHandler);
+
+// GET /api/email/fetch
+const fetchEmailsHandler: RequestHandler = async (req, res): Promise<void> => {
+  try {
+    console.log('Email fetch request received:', req.query);
+    
     const {
       limit = '50',
       offset = '0',
@@ -32,14 +59,29 @@ const fetchEmailsHandler: RequestHandler = async (req, res) => {
       sortOrder = 'desc'
     } = req.query;
 
+    // Validate parameters
+    const parsedLimit = parseInt(limit as string);
+    const parsedOffset = parseInt(offset as string);
+    
+    if (isNaN(parsedLimit) || isNaN(parsedOffset)) {
+       res.status(400).json({
+         success: false,
+         message: 'Invalid limit or offset parameters',
+         error: 'Parameters must be valid numbers'
+       });
+       return;
+     }
+
     const result = await supabaseEmailService.fetchEmails({
-      limit: parseInt(limit as string),
-      offset: parseInt(offset as string),
+      limit: parsedLimit,
+      offset: parsedOffset,
       unreadOnly: unreadOnly === 'true',
       searchQuery: search as string,
       sortBy: sortBy as 'received_at' | 'subject' | 'from_address',
       sortOrder: sortOrder as 'asc' | 'desc'
     });
+
+    console.log('Email fetch successful:', { count: result.emails.length, total: result.total });
 
     res.json({ 
       success: true, 
@@ -49,11 +91,15 @@ const fetchEmailsHandler: RequestHandler = async (req, res) => {
     });
   } catch (error) {
     console.error('Failed to fetch emails:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to fetch emails',
-      error: error instanceof Error ? error.message : 'Unknown error'
-    });
+    
+    // Ensure we always send a JSON response
+    if (!res.headersSent) {
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to fetch emails',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
   }
 };
 

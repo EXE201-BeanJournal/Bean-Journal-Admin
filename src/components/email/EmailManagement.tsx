@@ -66,10 +66,21 @@ const EmailManagement: React.FC<EmailManagementProps> = ({ className = '' }) => 
       if (unreadOnly) params.append('unreadOnly', 'true');
       
       const response = await fetch(`${baseUrl}/api/email/fetch?${params}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        throw new Error(`Expected JSON response but got: ${contentType}. Response: ${text.substring(0, 200)}`);
+      }
+      
       const data = await response.json();
       
       if (data.success) {
-        const emailsWithDates = data.emails.map((email: any) => ({
+        const emailsWithDates = data.emails.map((email: Email) => ({
           ...email,
           timestamp: new Date(email.received_at)
         }));
@@ -106,6 +117,16 @@ const EmailManagement: React.FC<EmailManagementProps> = ({ className = '' }) => 
           reply_to_email_id: emailId
         })
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        throw new Error(`Expected JSON response but got: ${contentType}. Response: ${text.substring(0, 200)}`);
+      }
 
       const data = await response.json();
       
@@ -165,6 +186,16 @@ const EmailManagement: React.FC<EmailManagementProps> = ({ className = '' }) => 
       const response = await fetch(`${baseUrl}/api/email/${emailId}`, {
         method: 'DELETE'
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        throw new Error(`Expected JSON response but got: ${contentType}. Response: ${text.substring(0, 200)}`);
+      }
       
       const data = await response.json();
       
@@ -376,7 +407,7 @@ const EmailManagement: React.FC<EmailManagementProps> = ({ className = '' }) => 
                       </div>
                       <div className="flex flex-col items-end space-y-1 flex-shrink-0 ml-2">
                         <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {formatTime(email.timestamp)}
+                          {formatTime(new Date(email.received_at))}
                         </span>
                         <div className="flex space-x-1">
                           {email.is_replied && (
@@ -425,7 +456,7 @@ const EmailManagement: React.FC<EmailManagementProps> = ({ className = '' }) => 
                         </div>
                         <div className="flex items-center space-x-2">
                           <Clock className="w-4 h-4" />
-                          <span>{selectedEmail.timestamp.toLocaleString()}</span>
+                          <span>{new Date(selectedEmail.received_at).toLocaleString()}</span>
                         </div>
                         {selectedEmail.attachments && selectedEmail.attachments.length > 0 && (
                           <div className="flex items-center space-x-2">
