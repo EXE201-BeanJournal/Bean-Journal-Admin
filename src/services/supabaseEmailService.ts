@@ -255,7 +255,7 @@ export class SupabaseEmailService {
         throw new Error(`Email service error: ${response.status} ${errorData}`);
       }
 
-      const result = await response.json();
+      const result = await response.json() as { id?: string; messageId?: string };
       const externalMessageId = result.id || result.messageId || 'unknown';
 
       // Log the sent email
