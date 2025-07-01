@@ -90,17 +90,22 @@ export class SupabaseEmailService {
   private emailServiceKey: string;
 
   constructor() {
-    // Use process.env for server-side environment variables
-    const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
-    const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || '';
-    this.emailServiceUrl = process.env.EMAIL_SERVICE_URL || 'https://api.resend.com';
-    this.emailServiceKey = process.env.EMAIL_SERVICE_KEY || '';
+    // Use import.meta.env for client-side environment variables in Vite
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+    this.emailServiceUrl = import.meta.env.VITE_EMAIL_SERVICE_URL || 'https://api.resend.com';
+    this.emailServiceKey = import.meta.env.VITE_EMAIL_SERVICE_KEY || '';
 
     console.log('SupabaseEmailService initialized with:', {
       hasUrl: !!supabaseUrl, 
       hasKey: !!supabaseKey,
       hasEmailServiceKey: !!this.emailServiceKey,
-      isServer: true
+      isClient: true,
+      env: {
+         VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
+         VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY ? 'present' : 'missing',
+         VITE_EMAIL_SERVICE_KEY: import.meta.env.VITE_EMAIL_SERVICE_KEY ? 'present' : 'missing'
+       }
     });
 
     if (!supabaseUrl || !supabaseKey) {
@@ -260,7 +265,7 @@ export class SupabaseEmailService {
           'Authorization': `Bearer ${this.emailServiceKey}`
         },
         body: JSON.stringify({
-          from: process.env.EMAIL_FROM_ADDRESS || 'support@beanjournal.site',
+          from: import.meta.env.VITE_EMAIL_FROM_ADDRESS || 'support@beanjournal.site',
           to: [emailData.to_address],
           subject: subject,
           text: body_text,
@@ -279,7 +284,7 @@ export class SupabaseEmailService {
       // Log the sent email
       await this.logSentEmail({
         to_address: emailData.to_address,
-        from_address: process.env.EMAIL_FROM_ADDRESS || 'support@beanjournal.site',
+        from_address: import.meta.env.VITE_EMAIL_FROM_ADDRESS || 'support@beanjournal.site',
         subject: subject,
         body_text: body_text,
         body_html: body_html,
@@ -299,7 +304,7 @@ export class SupabaseEmailService {
       // Log failed email
       await this.logSentEmail({
         to_address: emailData.to_address,
-        from_address: process.env.EMAIL_FROM_ADDRESS || 'support@beanjournal.site',
+        from_address: import.meta.env.VITE_EMAIL_FROM_ADDRESS || 'support@beanjournal.site',
         subject: emailData.subject,
         body_text: emailData.body_text,
         body_html: emailData.body_html,
