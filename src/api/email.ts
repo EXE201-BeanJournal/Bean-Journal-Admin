@@ -1,5 +1,5 @@
 import express, { RequestHandler } from 'express';
-import { supabaseEmailService } from '../services/supabaseEmailService';
+import { supabaseEmailService } from '../services/supabaseEmailService.js';
 
 const router = express.Router();
 
