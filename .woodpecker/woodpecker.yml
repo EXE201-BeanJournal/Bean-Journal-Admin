@@ -63,7 +63,7 @@ steps:
           pnpm install --no-frozen-lockfile &&
           pm2 delete BJ_Admin || true &&
           pm2 delete BJ_AdminServer || true &&
-          pm2 start npm --name "BJ_AdminServer" -- run start:server &&
+          pm2 start "dotenv -e .env npm run start:server" --name "BJ_AdminServer" &&
           pm2 start serve --name BJ_Admin -- -s ./dist/ -l 3002 &&
           pm2 save
         "
