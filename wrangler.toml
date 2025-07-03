@@ -1,0 +1,21 @@
+name = "bean-journal-email-worker"
+main = "cloudflare-email-worker.js"
+compatibility_date = "2024-01-15"
+compatibility_flags = ["nodejs_compat"]
+
+[env.production]
+vars = { ENVIRONMENT = "production" }
+
+[env.staging]
+vars = { ENVIRONMENT = "staging" }
+
+# Email routing configuration
+# The worker will handle incoming emails
+# Make sure to set these environment variables in Cloudflare dashboard:
+# - SUPABASE_URL
+# - SUPABASE_SERVICE_ROLE_KEY  
+# - ALLOWED_DESTINATIONS
+
+# Example email routing rules (configure in Cloudflare dashboard):
+# support@beanjournal.site -> this worker
+# help@beanjournal.site -> this worker

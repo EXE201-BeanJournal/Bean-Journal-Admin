@@ -6,6 +6,8 @@
 // SUPABASE_SERVICE_ROLE_KEY - Service role key (not anon key) for database writes
 // ALLOWED_DESTINATIONS - Comma-separated list of allowed email addresses (e.g., "support@beanjournal.site,help@beanjournal.site")
 
+// Using built-in email parsing instead of postal-mime for Cloudflare Workers compatibility
+
 export default {
   async email(message, env, ctx) {
     try {
@@ -30,61 +32,50 @@ export default {
       console.error('Error processing email:', error);
       // Don't throw error to avoid email bouncing
     }
+  },
+
+  async fetch(request, env, ctx) {
+    return new Response('Cloudflare Email Worker is running. This worker processes incoming emails via Cloudflare Email Routing.', {
+      headers: { 'Content-Type': 'text/plain' }
+    });
   }
 };
 
 /**
- * Parse the incoming email message
+ * Parse the incoming email message using built-in methods
  */
 async function parseEmailMessage(message) {
-  const headers = {};
+  // Read the raw email content
+  const rawEmail = await streamToString(message.raw);
   
-  // Extract headers
-  for (const [key, value] of message.headers) {
-    headers[key.toLowerCase()] = value;
-  }
+  // Parse headers and content from raw email
+  const { headers, body } = parseRawEmail(rawEmail);
   
-  // Get email content
-  const textContent = await message.text();
-  let htmlContent = '';
-  
-  // Try to get HTML content if available
-  try {
-    htmlContent = await message.html();
-  } catch (e) {
-    // HTML not available, use text content
-    htmlContent = textContent.replace(/\n/g, '<br>');
-  }
+  // Extract basic email information
+  const subject = headers['subject'] || '(No Subject)';
+  const fromHeader = headers['from'] || message.from;
+  const toHeader = headers['to'] || message.to;
   
   // Parse from address
-  const fromMatch = message.from.match(/^(.+?)\s*<(.+)>$/) || [null, '', message.from];
-  const fromName = fromMatch[1]?.trim().replace(/^["']|["']$/g, '') || '';
-  const fromAddress = fromMatch[2] || message.from;
+  const fromMatch = fromHeader.match(/<([^>]+)>/) || fromHeader.match(/([^\s]+@[^\s]+)/);
+  const fromAddress = fromMatch ? fromMatch[1] : fromHeader;
+  const fromName = fromHeader.replace(/<[^>]+>/, '').trim().replace(/"/g, '');
   
   // Parse to address
-  const toMatch = message.to.match(/^(.+?)\s*<(.+)>$/) || [null, '', message.to];
-  const toName = toMatch[1]?.trim().replace(/^["']|["']$/g, '') || '';
-  const toAddress = toMatch[2] || message.to;
+  const toMatch = toHeader.match(/<([^>]+)>/) || toHeader.match(/([^\s]+@[^\s]+)/);
+  const toAddress = toMatch ? toMatch[1] : toHeader;
+  const toName = toHeader.replace(/<[^>]+>/, '').trim().replace(/"/g, '');
   
-  // Extract CC and BCC if available
-  const ccAddresses = headers.cc ? headers.cc.split(',').map(addr => addr.trim()) : [];
-  const bccAddresses = headers.bcc ? headers.bcc.split(',').map(addr => addr.trim()) : [];
+  // Extract CC and BCC
+  const ccAddresses = headers['cc'] ? extractEmailAddresses(headers['cc']) : [];
+  const bccAddresses = headers['bcc'] ? extractEmailAddresses(headers['bcc']) : [];
   
-  // Get attachments
-  const attachments = [];
-  if (message.attachments) {
-    for (const attachment of message.attachments) {
-      const content = await attachment.arrayBuffer();
-      const base64Content = btoa(String.fromCharCode(...new Uint8Array(content)));
-      
-      attachments.push({
-        filename: attachment.name || 'attachment',
-        content_type: attachment.type || 'application/octet-stream',
-        size_bytes: content.byteLength,
-        content_base64: base64Content
-      });
-    }
-  }
+  // Simple content extraction (basic implementation)
+  const textContent = extractTextContent(body);
+  const htmlContent = extractHtmlContent(body) || textContent.replace(/\n/g, '<br>');
+  
+  // Basic attachment detection (simplified)
+   const attachments = extractAttachments(body);
   
   return {
     message_id: headers['message-id'] || `cf-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -94,13 +85,119 @@ async function parseEmailMessage(message) {
     to_name: toName,
     cc_addresses: ccAddresses,
     bcc_addresses: bccAddresses,
-    subject: message.subject || '(No Subject)',
+    subject: subject,
     body_text: textContent,
     body_html: htmlContent,
     received_at: new Date().toISOString(),
     headers: headers,
     attachments: attachments
   };
+}
+
+/**
+ * Convert ReadableStream to string
+ */
+async function streamToString(stream) {
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
+  let result = '';
+  
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      result += decoder.decode(value, { stream: true });
+    }
+    result += decoder.decode(); // flush
+    return result;
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+/**
+ * Parse raw email into headers and body
+ */
+function parseRawEmail(rawEmail) {
+  const lines = rawEmail.split('\r\n');
+  const headers = {};
+  let bodyStart = 0;
+  
+  // Find the end of headers (empty line)
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i] === '') {
+      bodyStart = i + 1;
+      break;
+    }
+    
+    // Parse header line
+    const colonIndex = lines[i].indexOf(':');
+    if (colonIndex > 0) {
+      const key = lines[i].substring(0, colonIndex).toLowerCase().trim();
+      const value = lines[i].substring(colonIndex + 1).trim();
+      headers[key] = value;
+    }
+  }
+  
+  const body = lines.slice(bodyStart).join('\r\n');
+  return { headers, body };
+}
+
+/**
+ * Extract email addresses from a header value
+ */
+function extractEmailAddresses(headerValue) {
+  const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+  return headerValue.match(emailRegex) || [];
+}
+
+/**
+ * Extract text content from email body
+ */
+function extractTextContent(body) {
+  // Simple text extraction - look for text/plain content
+   const textMatch = body.match(/Content-Type: text\/plain[\s\S]*?\r\n\r\n([\s\S]*?)(?=\r\n--|\nContent-Type|$)/i);
+   if (textMatch) {
+     return textMatch[1].trim();
+   }
+  
+  // Fallback: return body as-is if no MIME structure detected
+  return body.replace(/<[^>]*>/g, '').trim();
+}
+
+/**
+ * Extract HTML content from email body
+ */
+function extractHtmlContent(body) {
+  // Simple HTML extraction - look for text/html content
+   const htmlMatch = body.match(/Content-Type: text\/html[\s\S]*?\r\n\r\n([\s\S]*?)(?=\r\n--|\nContent-Type|$)/i);
+   if (htmlMatch) {
+     return htmlMatch[1].trim();
+   }
+  
+  return null;
+}
+
+/**
+ * Extract basic attachment information
+ */
+function extractAttachments(body) {
+  const attachments = [];
+  
+  // Simple attachment detection based on Content-Disposition
+  const attachmentRegex = /Content-Disposition: attachment; filename="([^"]+)"/gi;
+  let match;
+  
+  while ((match = attachmentRegex.exec(body)) !== null) {
+    attachments.push({
+      filename: match[1],
+      content_type: 'application/octet-stream',
+      size_bytes: 0,
+      content_base64: '' // Simplified - not extracting actual content
+    });
+  }
+  
+  return attachments;
 }
 
 /**
@@ -195,11 +292,4 @@ async function storeEmailInSupabase(emailData, env) {
   }
   
   return emailId;
-}
-
-// Optional: Add a fetch handler for testing/debugging
-export async function fetch(request, env, ctx) {
-  return new Response('Cloudflare Email Worker is running. This worker processes incoming emails via Cloudflare Email Routing.', {
-    headers: { 'Content-Type': 'text/plain' }
-  });
 }
