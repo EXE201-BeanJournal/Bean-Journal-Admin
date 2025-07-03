@@ -1,5 +1,5 @@
 when:
-  - event: pull_requestAdd commentMore actions
+  - event: pull_request
     branch: main
   - event: push
     branch: main
