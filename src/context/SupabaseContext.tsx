@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, ReactNode } from 'react';
+import { createContext, useContext, useMemo, ReactNode } from 'react';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { useAuth } from '@clerk/clerk-react';
 import { Database } from '../types/database';
