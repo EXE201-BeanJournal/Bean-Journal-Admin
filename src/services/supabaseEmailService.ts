@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // Email interfaces
 export interface Email {
@@ -85,26 +85,36 @@ export interface EmailStats {
 }
 
 export class SupabaseEmailService {
-  private supabase;
+  private supabase: SupabaseClient;
   private emailServiceUrl: string;
   private emailServiceKey: string;
+  private isClient: boolean;
+
+  private getEnvVar(key: string): string | undefined {
+    if (this.isClient && typeof import.meta !== 'undefined' && import.meta.env) {
+      return import.meta.env[key];
+    }
+    return process.env[key];
+  }
 
   constructor() {
-    // Use process.env for server-side environment variables
-    const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
-    const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || '';
-    this.emailServiceUrl = process.env.EMAIL_SERVICE_URL || 'https://api.resend.com';
-    this.emailServiceKey = process.env.EMAIL_SERVICE_KEY || '';
+    // Use appropriate environment variable access based on context
+    this.isClient = typeof window !== 'undefined';
+
+    const supabaseUrl = this.getEnvVar('VITE_SUPABASE_URL') || '';
+    const supabaseKey = this.getEnvVar('VITE_SUPABASE_ANON_KEY') || '';
+    this.emailServiceUrl = this.getEnvVar('VITE_EMAIL_SERVICE_URL') || this.getEnvVar('EMAIL_SERVICE_URL') || 'https://api.resend.com';
+    this.emailServiceKey = this.getEnvVar('VITE_EMAIL_SERVICE_KEY') || this.getEnvVar('EMAIL_SERVICE_KEY') || '';
 
     console.log('SupabaseEmailService initialized with:', {
       hasUrl: !!supabaseUrl, 
       hasKey: !!supabaseKey,
       hasEmailServiceKey: !!this.emailServiceKey,
-      isClient: true,
+      isClient: this.isClient,
       env: {
-         VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL,
-         VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY ? 'present' : 'missing',
-         VITE_EMAIL_SERVICE_KEY: process.env.VITE_EMAIL_SERVICE_KEY ? 'present' : 'missing'
+         VITE_SUPABASE_URL: this.getEnvVar('VITE_SUPABASE_URL') ? 'present' : 'missing',
+         VITE_SUPABASE_ANON_KEY: this.getEnvVar('VITE_SUPABASE_ANON_KEY') ? 'present' : 'missing',
+         VITE_EMAIL_SERVICE_KEY: this.getEnvVar('VITE_EMAIL_SERVICE_KEY') ? 'present' : 'missing'
        }
     });
 
@@ -265,7 +275,7 @@ export class SupabaseEmailService {
           'Authorization': `Bearer ${this.emailServiceKey}`
         },
         body: JSON.stringify({
-          from: process.env.VITE_EMAIL_FROM_ADDRESS || 'support@beanjournal.site',
+          from: this.getEnvVar('VITE_EMAIL_FROM_ADDRESS') || 'support@beanjournal.site',
           to: [emailData.to_address],
           subject: subject,
           text: body_text,
@@ -284,7 +294,7 @@ export class SupabaseEmailService {
       // Log the sent email
       await this.logSentEmail({
         to_address: emailData.to_address,
-        from_address: process.env.VITE_EMAIL_FROM_ADDRESS || 'support@beanjournal.site',
+        from_address: this.getEnvVar('VITE_EMAIL_FROM_ADDRESS') || 'support@beanjournal.site',
         subject: subject,
         body_text: body_text,
         body_html: body_html,
@@ -304,7 +314,7 @@ export class SupabaseEmailService {
       // Log failed email
       await this.logSentEmail({
         to_address: emailData.to_address,
-        from_address: process.env.VITE_EMAIL_FROM_ADDRESS || 'support@beanjournal.site',
+        from_address: this.getEnvVar('VITE_EMAIL_FROM_ADDRESS') || 'support@beanjournal.site',
         subject: emailData.subject,
         body_text: emailData.body_text,
         body_html: emailData.body_html,
