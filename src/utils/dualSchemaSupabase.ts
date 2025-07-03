@@ -1,9 +1,9 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../types/database';
 
-// Use Vite specific env vars for client-side accessibility
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Use process.env for environment variables (defined by Vite for client-side)
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
 // Warnings if Supabase credentials are not configured or are using default placeholders
 if (!supabaseUrl || supabaseUrl === "YOUR_SUPABASE_URL") {
