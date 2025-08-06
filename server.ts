@@ -1,6 +1,6 @@
 import express, { RequestHandler } from 'express';
 import dotenv from 'dotenv';
-import cors from 'cors';
+// import cors from 'cors'; // Removed - nginx handles CORS
 import os from 'os';
 import getAllUsersHandler, {
   getUserByIdHandler,
@@ -16,16 +16,14 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001; //  Port for the backend server
 
-// CORS Configuration
-const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3002';
-const allowedOrigins = ['http://localhost:3002', frontendUrl];
-
-const corsOptions = {
-  origin: allowedOrigins,
-  optionsSuccessStatus: 200 // For legacy browser support
-};
-
-app.use(cors(corsOptions));
+// CORS is handled by nginx proxy, no need for Express CORS middleware
+// const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3002';
+// const allowedOrigins = ['http://localhost:3002', frontendUrl];
+// const corsOptions = {
+//   origin: allowedOrigins,
+//   optionsSuccessStatus: 200 // For legacy browser support
+// };
+// app.use(cors(corsOptions)); // Disabled - nginx handles CORS
 app.use(express.json());
 
 // Type assertion for all handlers to ensure Express compatibility
